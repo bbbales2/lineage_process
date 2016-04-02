@@ -175,6 +175,7 @@ for i in range(40, 60, 1):
     #        if nlabels[ii, jj]:
     #            circle = plt.Circle((jj * b + dw / 2 + b / 2, ii * b + dh / 2 + b / 2), 1.0, color='r')
     #            fig.gca().add_artist(circle)
+    plt.gcf().set_size_inches((8, 6))
     plt.show()
     print 'hi'
 
