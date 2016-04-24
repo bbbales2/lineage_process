@@ -144,12 +144,27 @@ def max_pool_2x2(x):
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
 
+#h_conv1 = tf.contrib.layers.convolution2d(x_image, 32, [3, 3], activation_fn = tf.nn.relu)
+#h_pool1 = max_pool_2x2(h_conv1)
+
+#h_conv2 = tf.contrib.layers.convolution2d(h_pool1, 64, [3, 3], activation_fn = tf.nn.relu)
+#h_pool2 = max_pool_2x2(h_conv2)
+
+#h_conv3 = tf.contrib.layers.convolution2d(h_pool2, 128, [3, 3], activation_fn = tf.nn.relu)
+#h_pool3 = max_pool_2x2(h_conv3)
+
+#h_conv4 = tf.contrib.layers.convolution2d(h_pool3, 256, [3, 3], activation_fn = tf.nn.relu)
+#h_pool4 = max_pool_2x2(h_conv4)
+
+#h_conv5 = tf.contrib.layers.convolution2d(h_pool4, 512, [3, 3], activation_fn = tf.nn.relu)
+
 W_conv1 = tf.Variable(tf.truncated_normal([3, 3, 3, 32], stddev = 0.1))#2.0 / (25.0)
 b_conv1 = bias_variable([32])
 
-h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+h_conv1 = (conv2d(x_image, W_conv1) + b_conv1)
 h_pool1 = max_pool_2x2(h_conv1)
 
+h_conv1 = tf.contrib.layers.convolution2d(x, 32, [3, 3], activation_fn = tf.nn.relu)
 W_conv2 = tf.Variable(tf.truncated_normal([3, 3, 32, 64], stddev = 0.1))#2.0 / (25.0)
 b_conv2 = bias_variable([64])
 
