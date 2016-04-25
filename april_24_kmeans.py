@@ -190,7 +190,7 @@ for frame in frames[0:100:10]:
     plt.show()
 
     chists = []
-    R = 2
+    R = 3
     for i in range(R, labels.shape[0] - R):
         for j in range(R, labels.shape[1] - R):
             chists.append(get_chist(rgb[i - R : i + R, j - R : j + R]))
