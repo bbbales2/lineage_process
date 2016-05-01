@@ -27,7 +27,7 @@ for ref in reference:
 
 numpy.random.shuffle(classes)
 
-classes = classes[:100]
+classes = classes[:10]
 
 classes = sorted(classes)
 
@@ -57,7 +57,7 @@ for i, code in enumerate(classes):
     print i
 
 #%%
-labels = [1] * numImages + [0] * numImages
+labels.extend(['background'] * numImages)
 #%%
 len(labels)
 #%%
@@ -114,58 +114,6 @@ def one(N, i):
 lref = numpy.array([one(len(i2l), l2i[l]) for l in labels])
 
 #%%
-xs = numpy.linspace(0.0, 0.16)
-plt.plot(xs, 1.0 / (1.0 + numpy.exp(-(xs * 151.2 - 6.0))))
-#%%
-hss = []
-vs = []
-for i in range(110, 121):
-    f = images[i]
-    #plt.imshow(features[i])
-    im = skimage.color.rgb2hsv(f)
-
-    f1 = numpy.zeros((96, 96, 4))
-    f1[:, :, :3] = f[:, :, :3]
-    f1[:, :, 3] = 1.0 - im[:, :, 0]
-
-    alphas = numpy.concatenate((im[:, :, :1],im[:, :, :1], im[:, :, :1]), axis = 2)
-
-    avg = avgs.eval(feed_dict = { x_image : f.reshape(1, f.shape[0], f.shape[1], f.shape[2]) })
-
-    #1/0
-    #alphas = 1.0 / (1.0 + numpy.exp(-(alphas * 151.2 - 6.0)))
-
-    alphas = 1.0 * (alphas > 0.02)
-
-    #alphas /= alphas.flatten().max()
-
-    #f2 = numpy.zeros((96, 96, 3))
-    #f2[:, : ,:3] = f1[:, :, :3] * alphas + (backgrounds[0][:96, 0:96] / 255.0) * (1.0 - alphas)
-
-    #plt.imshow(f2)
-    plt.imshow(f)
-    plt.show()
-    plt.imshow(avg[0], interpolation = 'NONE')
-    plt.show()
-#%%
-hs = []
-for im in images:
-    #plt.imshow(features[i])
-    hsv = skimage.color.rgb2hsv(im)
-
-    hs.append(hsv[:, :, :3])
-
-hs = numpy.array(hs)
-#%%
-
-indices = range(0, len(labels))
-numpy.random.shuffle(indices)
-
-n = len(labels) * 8 / 10
-
-ieval = indices[n:]
-indices = indices[:n]
-
 #%%
 import tensorflow as tf
 sess = tf.InteractiveSession()
@@ -268,7 +216,7 @@ f = open('stdout', 'w')
 
 for r in range(100):
     for i in range(0, len(labels), batch_size):
-        xs = features[indices[i : i + batch_size]]
+        xs = images[indices[i : i + batch_size]]
         ys = lref[indices[i : i + batch_size]]
 
         train, yl, acc = sess.run([train_step, yloss, accuracy], feed_dict = {x_image : xs, y_ : ys, keep_prob: 0.5})
