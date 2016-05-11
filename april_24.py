@@ -12,6 +12,7 @@ import skimage.exposure
 import time
 import pickle
 import sklearn.cluster
+import sklearn.mixture
 import skimage.color
 import itertools
 
@@ -39,16 +40,27 @@ for (j, i), screen in zip(presses, frames):
 
 #%%
 
-b = 6
+b = 8
 
 sy = 7
 sx = 3
 
 indices = {}
 descs = {}
+backgrounds = []
 for k, frame in enumerate(frames[0:100:10]):
     im = frame[:360].astype('double') / 255.0
-    #im = skimage.color.rgb2hsv(im)
+    #im = skimage.color.rgb2hsv((im * 255).astype('uint8'))
+    #plt.imshow(im[:, :, 0], interpolation = 'NONE', cmap = plt.cm.hsv);
+    #plt.colorbar()
+    #plt.show()
+    #plt.imshow(im[:, :, 1], interpolation = 'NONE', cmap = plt.cm.hsv);
+    #plt.colorbar()
+    #plt.show()
+    #plt.imshow(im[:, :, 2], interpolation = 'NONE', cmap = plt.cm.hsv);
+    #plt.colorbar()
+    #plt.show()
+
     tmp = time.time()
     hog = features.hogpad(features.hog(im, b))
     rgb = features.rgbhist(im, b)
@@ -68,6 +80,7 @@ for k, frame in enumerate(frames[0:100:10]):
     indices[k] = []
     descs[k] = []
 
+    backgrounds.extend(rgb.reshape((rgb.shape[0] * rgb.shape[1], 3)))
     for i in range(sy / 2, rgb.shape[0] - sy / 2):
         for j in range(sx / 2, rgb.shape[1] - sx / 2):
             indices[k].append((i, j))
@@ -75,13 +88,67 @@ for k, frame in enumerate(frames[0:100:10]):
             #descs[k].append(hog[i - sy / 2 : i + sy / 2, j - sx / 2 : j + sx / 2].flatten())
 #sklearn.decomposition.PCA(n_components=None, copy=True, whiten=False)
 #%%
+from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances
+class KMedians(sklearn.cluster.KMeans):
+    def _e_step(self, X):
+        self.labels_ = manhattan_distances(X, self.cluster_centers_).argmin(axis=1)
+
+    def _average(self, X):
+        return np.median(X, axis=0)
+#%%
+backgrounds = numpy.array(backgrounds)
+bg2 = numpy.concatenate((numpy.linalg.norm(backgrounds, axis = 1).reshape((backgrounds.shape[0], 1)), backgrounds), axis = 1)
+bg2[:, 1] = bg2[:, 1] / (1e-5 + bg2[:, 0])
+bg2[:, 2] = bg2[:, 2] / (1e-5 + bg2[:, 0])
+bg2[:, 3] = bg2[:, 3] / (1e-5 + bg2[:, 0])
+#%%
+plt.hist(backgrounds[:, 2])
+plt.show()
+#%%
+N = 15
+bgkmeans = sklearn.cluster.KMeans(N)
+bgkmeans.fit(bg2[:, 1:])
+plt.imshow(numpy.abs(bgkmeans.cluster_centers_.reshape((1, N, 3))), interpolation = 'NONE')
+plt.show()
+
+#%%
+for frame in frames[0:100:10]:
+    im = frame[:360].astype('double') / 255.0
+
+    tmp = time.time()
+    hog = features.hogpad(features.hog(im, b))
+    rgb = features.rgbhist(im, b)
+    print time.time() - tmp
+
+    inp = rgb.reshape((rgb.shape[0] * rgb.shape[1], 3))
+    inp /= 1e-5 + numpy.linalg.norm(inp, axis = 1).reshape((inp.shape[0], 1))
+    labels = numpy.array(bgkmeans.predict(inp))
+    labelsplot = numpy.abs(numpy.array([numpy.abs(bgkmeans.cluster_centers_[l]) for l in labels]).reshape(rgb.shape))
+
+    plt.imshow(labelsplot, interpolation = 'NONE', extent = (0, im.shape[1], im.shape[0], 0))
+    plt.show()
+    plt.imshow(im)
+    plt.imshow(labelsplot, interpolation = 'NONE', extent = (0, im.shape[1], im.shape[0], 0), alpha = 0.5)
+    plt.show()
+#%%
+s = sklearn.cluster.SpectralClustering(5)
+s.fit(backgrounds)
+plt.imshow(s.cluster_centers_.reshape((1, 5, 3)), interpolation = 'NONE')
+plt.show()
+#%%
+gmm = sklearn.mixture.GMM(5, covariance_type = 'full')
+
+gmm.fit(bg2[:, 1:])
+plt.imshow(gmm.means_.reshape((1, gmm.means_.shape[0], gmm.means_.shape[1])), interpolation = 'NONE')
+plt.show()
+#%%
 out = list(itertools.chain(*descs.values()[0:10]))
 numpy.random.shuffle(out)
 out = out[0:10000]
-pca = sklearn.decomposition.PCA(n_components = 10, copy = True, whiten = True)
-pca.fit(out)
+#pca = sklearn.decomposition.PCA(n_components = 10, copy = True, whiten = True)
+#pca.fit(out)
 
-nout = pca.transform(out)
+#nout = pca.transform(out)
 kmeans = sklearn.cluster.KMeans(3)
 kmeans.fit(nout)
 
