@@ -6,13 +6,14 @@ import matplotlib.pyplot as plt
 import time
 import array
 import sys
+import numpy
 #%%
 
 vbox = virtualbox.VirtualBox()
 
 session = virtualbox.Session()
 
-vm = vbox.find_machine('windows2')
+vm = vbox.find_machine('Windows')
 
 session = vm.create_session()
 
@@ -23,18 +24,18 @@ def get_screenshot(png, h, w):
     a = array.array('B')
     a.fromstring(png)
     data = numpy.array(list(a)).reshape(w, h, 4, order = 'C')
-    data = 255 - data[:, :, :3]
+    data = data[:, :, :3].astype('uint8')
 
     return data
 
 h, w, _, _, _ = session.console.display.get_screen_resolution(0)
 
-tmp = time.time()
-data = get_screenshot(h, w)
-print time.time() - tmp
+#tmp = time.time()
+#data = get_screenshot(h, w)
+#print time.time() - tmp
 
-plt.imshow(data)
-plt.show()
+#plt.imshow(data)
+#plt.show()
 #%%
 
 lastButton = 0
@@ -73,10 +74,16 @@ except:
 import pickle
 
 f = open('recorded.pkl', 'w')
-screens = [get_screenshot(screen, h, w) for screen in screens]
-pickle.dump((presses, screens))
+screens = numpy.array([get_screenshot(screen, h, w) for screen in screens])
+
+numpy.save('recorded.numpy', screens)
+
+plt.imshow(screens[0])
+plt.show()
+
+pickle.dump(presses, f)
 f.close()
-exit(1)
+#exit(1)
 #%%
 #for (j, i), screen in zip(presses, screens):
 #    plt.imshow()
