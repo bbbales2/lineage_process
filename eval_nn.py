@@ -29,7 +29,7 @@ with tf.variable_scope("image_filters", reuse = False):
     net = googlenet.GoogleNet({'data' : tens})
 
 with tf.variable_scope("image_filters", reuse = True):
-    net.load('googlenet.tf', sess, ignore_missing = True)
+    net.load('/home/bbales2/caffe-tensorflow/googlenet.tf', sess, ignore_missing = True)
 
 #%%
 f = open('totrain.json')
